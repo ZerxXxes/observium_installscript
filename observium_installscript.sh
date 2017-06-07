@@ -83,10 +83,6 @@ else
     read -s mysql_root
 fi
 
-#echo "Choose a MySQL password for Observium application"
-#read -s mysql_observium
-mysql_observium="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-15};echo;)"
-echo "got string: $mysql_observium"
 echo "mysql-server mysql-server/root_password password $mysql_root" | debconf-set-selections
 echo "mysql-server mysql-server/root_password_again password $mysql_root" | debconf-set-selections
 if [ $OS = "Ubuntu" ] && [ $VER = "16.04" ]; then
@@ -147,7 +143,9 @@ else
    exit 1
 fi
 cd observium
-echo -e "${GREEN} [*] Creating database user for Observium...${NC}"
+echo -e "${GREEN} [*] Creating database user for Observium with a random password...${NC}"
+mysql_observium="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-15};echo;)"
+
 mysql -uroot -p"$mysql_root" -e "CREATE DATABASE observium DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci"
 mysql -uroot -p"$mysql_root" -e "GRANT ALL PRIVILEGES ON observium.* TO 'observium'@'localhost' IDENTIFIED BY '$mysql_observium'"
 echo -e "${GREEN} [*] Creating Observium config-file...${NC}"
