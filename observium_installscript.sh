@@ -59,7 +59,7 @@ echo "1. Observium Community Edition"
 echo "2. Observium Pro Edition stable (requires account at https://www.observium.org/subs/)"
 echo "3. Observium Pro Edition rolling (requires account at https://www.observium.org/subs/)"
 echo -n "(1-3):"
-read observ_ver
+read -n 1 observ_ver
 echo "you choose $observ_ver"
 echo " "
 
@@ -134,10 +134,12 @@ if [ $observ_ver = 1 ]; then
    echo " "
 elif [ $observ_ver = 2 ]; then
    echo -e "${GREEN} [*] Checking out Observium Pro stable from SVN${NC}"
-   svn co http://svn.observium.org/svn/observium/branches/stable observium
+   read -p "Please enter your SVN username: " svn_user
+   svn co -q --username "$svn_user" http://svn.observium.org/svn/observium/branches/stable observium
 elif [ $observ_ver = 3 ]; then
    echo -e "${GREEN} [*] Checking out Observium Pro rolling from SVN${NC}"
-   svn co http://svn.observium.org/svn/observium/trunk observium
+   read -p "Please enter your SVN username: " svn_user
+   svn co -q --username "$svn_user" http://svn.observium.org/svn/observium/trunk observium
 else
    echo -e "${RED} [*] ERROR: Invalid option $observ_ver${NC}"
    exit 1
@@ -152,11 +154,43 @@ echo -e "${GREEN} [*] Creating Observium config-file...${NC}"
 sed "s/USERNAME/observium/g" config.php.default > /tmp/installscript.tmp
 sed "s/PASSWORD/$mysql_observium/g" /tmp/installscript.tmp > config.php
 ./discovery.php -u
+echo -e "${GREEN} [*] Creating log and rrd-directories...${NC}"
 mkdir -p logs
 mkdir -p rrd
 chown www-data:www-data rrd
-read -r -d '' APACHE22 <<- EOM
-<VirtualHost *:80>
+echo "debug: dirs created"
+
+apachever="$(apache2ctl -v)"
+if [[ $apachever == *"Apache/2.4"* ]]; then
+  echo -e "${GREEN} [*] Apache version is 2.4, creating config...${NC}"
+  cat > /etc/apache2/sites-available/000-default.conf <<- EOM
+  <VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /opt/observium/html
+    <FilesMatch \.php$>
+      SetHandler application/x-httpd-php
+    </FilesMatch>
+    <Directory />
+            Options FollowSymLinks
+            AllowOverride None
+    </Directory>
+    <Directory /opt/observium/html/>
+            DirectoryIndex index.php
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+    </Directory>
+    ErrorLog  ${APACHE_LOG_DIR}/error.log
+    LogLevel warn
+    CustomLog  ${APACHE_LOG_DIR}/access.log combined
+    ServerSignature On
+  </VirtualHost>
+EOM
+  #echo "$APACHE24" > /etc/apache2/sites-available/000-default.conf
+elif [[ $apachever == *"Apache/2.2"* ]]; then
+  echo -e "${GREEN} [*] Apache version is 2.2m creating config...${NC}"
+  cat > /etc/apache2/sites-available/default <<- EOM
+  <VirtualHost *:80>
     ServerAdmin webmaster@localhost
     DocumentRoot /opt/observium/html
     <FilesMatch \.php$>
@@ -177,38 +211,9 @@ read -r -d '' APACHE22 <<- EOM
     LogLevel warn
     CustomLog  ${APACHE_LOG_DIR}/access.log combined
     ServerSignature On
-</VirtualHost>
+  </VirtualHost>
 EOM
-read -r -d '' APACHE24 <<- EOM
-<VirtualHost *:80>
-    ServerAdmin webmaster@localhost
-    DocumentRoot /opt/observium/html
-    <FilesMatch \.php$>
-      SetHandler application/x-httpd-php
-    </FilesMatch>
-    <Directory />
-            Options FollowSymLinks
-            AllowOverride None
-    </Directory>
-    <Directory /opt/observium/html/>
-            DirectoryIndex index.php
-            Options Indexes FollowSymLinks MultiViews
-            AllowOverride All
-            Require all granted
-    </Directory>
-    ErrorLog  ${APACHE_LOG_DIR}/error.log
-    LogLevel warn
-    CustomLog  ${APACHE_LOG_DIR}/access.log combined
-    ServerSignature On
-</VirtualHost>
-EOM
-apachever="$(apache2ctl -v)"
-if [[ $apachever == *"Apache/2.4"* ]]; then
-  echo -e "${GREEN} [*] Apache version is 2.4, creating config...${NC}"
-  echo "$APACHE24" > /etc/apache2/sites-available/000-default.conf
-elif [[ $apachever == *"Apache/2.2"* ]]; then
-  echo -e "${GREEN} [*] Apache version is 2.2m creating config...${NC}"
-  echo "$APACHE22" > /etc/apache2/sites-available/default
+  #echo "$APACHE22" > /etc/apache2/sites-available/default
 else
   echo -e "${RED} [*] ERROR: Could not find right version of Apache${NC}"
   exit 1
@@ -222,7 +227,7 @@ echo -n "Passowrd:"
 read -s observ_password
 ./adduser.php $observ_username $observ_password 10
 echo -e "${GREEN} [*] Creating Observium cronjob...${NC}"
-read -r -d '' CRONCONFIG <<- EOM
+cat > /etc/cron.d/observium <<- EOM
 # Run a complete discovery of all devices once every 6 hours
 33  */6   * * *   root    /opt/observium/discovery.php -h all >> /dev/null 2>&1
 # Run automated discovery of newly added devices every 5 minutes
@@ -234,6 +239,5 @@ read -r -d '' CRONCONFIG <<- EOM
 # Run housekeeping script daily for rrds, ports, orphaned entries in the database and performance data
 47 4 * * * root /opt/observium/housekeeping.php -yrptb >> /dev/null 2>&1
 EOM
-echo $CRONCONFIG > /etc/cron.d/observium
-echo -e "${GREEN} [*] Installation finished! Use your webbrowser and login to the web interface with the account you just created and add your first device${NC}"
 
+echo -e "${GREEN} [*] Installation finished! Use your webbrowser and login to the web interface with the account you just created and add your first device${NC}"
