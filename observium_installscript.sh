@@ -134,10 +134,12 @@ if [ $observ_ver = 1 ]; then
    echo " "
 elif [ $observ_ver = 2 ]; then
    echo -e "${GREEN} [*] Checking out Observium Pro stable from SVN${NC}"
+   echo "Your SVN username and password is found efter you login at: https://www.observium.org/subs/"
    read -p "Please enter your SVN username: " svn_user
    svn co -q --username "$svn_user" http://svn.observium.org/svn/observium/branches/stable observium
 elif [ $observ_ver = 3 ]; then
    echo -e "${GREEN} [*] Checking out Observium Pro rolling from SVN${NC}"
+   echo "Your SVN username and password is found efter you login at: https://www.observium.org/subs/"
    read -p "Please enter your SVN username: " svn_user
    svn co -q --username "$svn_user" http://svn.observium.org/svn/observium/trunk observium
 else
