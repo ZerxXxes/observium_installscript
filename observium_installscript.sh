@@ -129,7 +129,7 @@ echo -e "${GREEN} [*] Creating Observium dir${NC}"
 mkdir -p /opt/observium && cd /opt
 if [ $observ_ver = 1 ]; then
    echo -e "${GREEN} [*] Downloading Observium CE and unpacking...${NC}"
-   wget -r -nv http://www.observium.org/observium-community-latest.tar.gz
+   wget -r -nv http://www.observium.org/observium-community-latest.tar.gz -O /opt/observium-community-latest.tar.gz
    tar zxf observium-community-latest.tar.gz --checkpoint=.1000
    echo " "
 elif [ $observ_ver = 2 ]; then
