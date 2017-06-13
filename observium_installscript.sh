@@ -159,7 +159,11 @@ sed "s/PASSWORD/$mysql_observium/g" /tmp/installscript.tmp > config.php
 echo -e "${GREEN} [*] Creating log and rrd-directories...${NC}"
 mkdir -p logs
 mkdir -p rrd
-chown www-data:www-data rrd
+#chown www-data:www-data rrd
+useradd -G www-data observium
+chown -R observium:observium logs
+chown -R observium:www-data rrd
+chmod -R g+w rrd
 
 apachever="$(apache2ctl -v)"
 if [[ $apachever == *"Apache/2.4"* ]]; then
@@ -230,15 +234,15 @@ read -s observ_password
 echo -e "${GREEN} [*] Creating Observium cronjob...${NC}"
 cat > /etc/cron.d/observium <<- EOM
 # Run a complete discovery of all devices once every 6 hours
-33  */6   * * *   root    /opt/observium/discovery.php -h all >> /dev/null 2>&1
+33  */6   * * *   observium    /opt/observium/discovery.php -h all >> /dev/null 2>&1
 # Run automated discovery of newly added devices every 5 minutes
-*/5 *     * * *   root    /opt/observium/discovery.php -h new >> /dev/null 2>&1
+*/5 *     * * *   observium    /opt/observium/discovery.php -h new >> /dev/null 2>&1
 # Run multithreaded poller wrapper every 5 minutes
-*/5 *     * * *   root    /opt/observium/poller-wrapper.py 4 >> /dev/null 2>&1
+*/5 *     * * *   observium    /opt/observium/poller-wrapper.py 4 >> /dev/null 2>&1
 # Run housekeeping script daily for syslog, eventlog and alert log
-13 5 * * * root /opt/observium/housekeeping.php -ysel >> /dev/null 2>&1
+13 5 * * * observium /opt/observium/housekeeping.php -ysel >> /dev/null 2>&1
 # Run housekeeping script daily for rrds, ports, orphaned entries in the database and performance data
-47 4 * * * root /opt/observium/housekeeping.php -yrptb >> /dev/null 2>&1
+47 4 * * * observium /opt/observium/housekeeping.php -yrptb >> /dev/null 2>&1
 EOM
 
 echo -e "${GREEN} [*] Installation finished! Use your webbrowser and login to the web interface with the account you just created and add your first device${NC}"
