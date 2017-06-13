@@ -160,7 +160,6 @@ echo -e "${GREEN} [*] Creating log and rrd-directories...${NC}"
 mkdir -p logs
 mkdir -p rrd
 chown www-data:www-data rrd
-echo "debug: dirs created"
 
 apachever="$(apache2ctl -v)"
 if [[ $apachever == *"Apache/2.4"* ]]; then
