@@ -158,8 +158,8 @@ sed "s/PASSWORD/$mysql_observium/g" /tmp/installscript.tmp > config.php
 ./discovery.php -u
 echo -e "${GREEN} [*] Creating log and rrd-directories...${NC}"
 mkdir -p logs
-mkdir -p rrd
-#chown www-data:www-data rrd
+#this mode makes all files created inherit permissions of rrd/-folder
+mkdir -p --mode=u+rwx,g+rs,g-w,o-rwx rrd
 useradd -G www-data observium
 chown -R observium:observium logs
 chown -R observium:www-data rrd
