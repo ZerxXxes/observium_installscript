@@ -244,7 +244,7 @@ cat > /etc/cron.d/observium <<- EOM
 # Run automated discovery of newly added devices every 5 minutes
 */5 *     * * *   observium    /opt/observium/discovery.php -h new >> /dev/null 2>&1
 # Run multithreaded poller wrapper every 5 minutes
-*/5 *     * * *   observium    /opt/observium/poller-wrapper.py 4 >> /dev/null 2>&1
+*/5 *     * * *   observium    /opt/observium/poller-wrapper.py >> /dev/null 2>&1
 # Run housekeeping script daily for syslog, eventlog and alert log
 13 5 * * * observium /opt/observium/housekeeping.php -ysel >> /dev/null 2>&1
 # Run housekeeping script daily for rrds, ports, orphaned entries in the database and performance data
