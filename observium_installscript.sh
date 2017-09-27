@@ -79,6 +79,7 @@ if dpkg --list mysql-server | egrep -q ^ii; then
         esac
     done
 else
+    echo ${GREEN} [*] No MySQL server detected in this server, installing MySQL...${NC}"
     echo "Choose a MySQL root password"
     read -s mysql_root
 fi
