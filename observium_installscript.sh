@@ -79,7 +79,7 @@ if dpkg --list mysql-server | egrep -q ^ii; then
         esac
     done
 else
-    echo ${GREEN} [*] No MySQL server detected in this server, installing MySQL...${NC}"
+    echo -e ${GREEN} [*] No MySQL server detected in this server, installing MySQL...${NC}"
     echo "Choose a MySQL root password"
     read -s mysql_root
 fi
@@ -87,8 +87,10 @@ fi
 echo "mysql-server mysql-server/root_password password $mysql_root" | debconf-set-selections
 echo "mysql-server mysql-server/root_password_again password $mysql_root" | debconf-set-selections
 
-echo ${GREEN} [*] Updating repos...${NC}"
+echo -e ${GREEN} [*] Updating repos...${NC}"
 apt-get -qq update
+
+echo -e "${GREEN} [*] Beginning package installtion, this might take up to 30min${NC}"
 if [ $OS = "Ubuntu" ] && [ $VER = "16.04" ]; then
    echo -e "${GREEN} [*] We are on Ubuntu 16.04, installing packages...${NC}"
    apt-get -qq install -y libapache2-mod-php7.0 php7.0-cli php7.0-mysql php7.0-mysqli php7.0-gd php7.0-mcrypt php7.0-json php-pear snmp fping mysql-server mysql-client python-mysqldb rrdtool subversion whois mtr-tiny ipmitool graphviz imagemagick apache2
