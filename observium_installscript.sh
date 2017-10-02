@@ -79,7 +79,7 @@ if dpkg --list mysql-server | egrep -q ^ii; then
         esac
     done
 else
-    echo -e ${GREEN} [*] No MySQL server detected in this server, installing MySQL...${NC}"
+    echo -e "${GREEN} [*] No MySQL server detected in this server, installing MySQL...${NC}"
     echo "Choose a MySQL root password"
     read -s mysql_root
 fi
@@ -87,7 +87,7 @@ fi
 echo "mysql-server mysql-server/root_password password $mysql_root" | debconf-set-selections
 echo "mysql-server mysql-server/root_password_again password $mysql_root" | debconf-set-selections
 
-echo -e ${GREEN} [*] Updating repos...${NC}"
+echo -e "${GREEN} [*] Updating repos...${NC}"
 apt-get -qq update
 
 echo -e "${GREEN} [*] Beginning package installtion, this might take up to 30min${NC}"
@@ -234,7 +234,7 @@ apache2ctl restart
 echo "Create first time Observium admin user"
 echo -n "Username:"
 read observ_username
-echo -n "Passowrd:"
+echo -n "Password:"
 read -s observ_password
 ./adduser.php $observ_username $observ_password 10
 echo -e "${GREEN} [*] Creating Observium cronjob...${NC}"
