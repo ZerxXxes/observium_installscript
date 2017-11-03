@@ -109,26 +109,28 @@ elif [ $OS = "Ubuntu" ] && [ $VER = "17.04" ]; then
    a2dismod mpm_event
    a2enmod mpm_prefork
    a2enmod php7.0
-elif [ $OS = "Debian" ] && [ $VER = "8.0" ]; then
-   echo -e "${GREEN} [*] We are on Debian 8.0, installing packages...${NC}"
+elif [ $OS = "Debian" ] && [[ $VER =~ 8.* ]]; then
+   echo -e "${GREEN} [*] We are on Debian 8.x, installing packages...${NC}"
    apt-get -qq install -y libapache2-mod-php7.0 php7.0-cli php7.0-mysql php7.0-mysqli php7.0-gd php7.0-mcrypt php7.0-json php-pear snmp fping mysql-server mysql-client python-mysqldb rrdtool subversion whois mtr-tiny ipmitool graphviz imagemagick apache2
    phpenmod mcrypt
    a2dismod mpm_event
    a2enmod mpm_prefork
    a2enmod php7.0
-elif [ $OS = "Debian" ] && [ $VER = "9.0" ]; then
-   echo -e "${GREEN} [*] We are on Debian 9.0, installing packages...${NC}"
+elif [ $OS = "Debian" ] && [[ $VER =~ 9.* ]]; then
+   echo -e "${GREEN} [*] We are on Debian 9.x, installing packages...${NC}"
    apt-get -qq install -y libapache2-mod-php7.0 php7.0-cli php7.0-mysql php7.0-mysqli php7.0-gd php7.0-mcrypt php7.0-json php-pear snmp fping mariadb-server mariadb-client python-mysqldb rrdtool subversion whois mtr-tiny ipmitool graphviz imagemagick apache2
    phpenmod mcrypt
    a2dismod mpm_event
    a2enmod mpm_prefork
    a2enmod php7.0
-elif [ $OS = "Debian" ] && [ $VER = "7.0" ]; then
-   echo -e "${GREEN} [*] We are on Debian 7.0, installing packages...${NC}"
+elif [ $OS = "Debian" ] && [[ $VER =~ 7.* ]]; then
+   echo -e "${GREEN} [*] We are on Debian 7.x, installing packages...${NC}"
    apt-get -qq install -y libapache2-mod-php5 php5-cli php5-mysql php5-gd php5-mcrypt php5-json php-pear snmp fping mysql-server mysql-client python-mysqldb rrdtool subversion whois mtr-tiny ipmitool graphviz imagemagick
    php5enmod mcrypt
 else
    echo -e "${RED} [*] ERROR: This installscript does not support this distro, only Debian or Ubuntu supported. Use the manual guide at http://docs.observium.org/install_rhel7/ ${NC}"
+   echo "OS:" $OS
+   echo "Version:" $VER
    exit 1
 fi
 echo -e "${GREEN} [*] Creating Observium dir${NC}"
