@@ -6,6 +6,32 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+function agentinstall {
+    echo -e "${GREEN}Installing additional packages...${NC}"
+    apt-get -qq install -y xinetd snmpd libwww-perl
+    cp /opt/observium/scripts/observium_agent_xinetd /etc/xinetd.d/observium_agent_xinetd
+    service xinetd restart
+    cp /opt/observium/scripts/observium_agent /usr/bin/observium_agent
+    mkdir -p /usr/lib/observium_agent
+    mkdir -p /usr/lib/observium_agent/scripts-available
+    mkdir -p /usr/lib/observium_agent/scripts-enabled
+    cp -r /opt/observium/scripts/agent-local/* /usr/lib/observium_agent/scripts-available
+    chmod +x /usr/bin/observium_agent
+    ln -sf /usr/lib/observium_agent/scripts-available/dmi /usr/lib/observium_agent/scripts-enabled
+    ln -sf /usr/lib/observium_agent/scripts-available/apache /usr/lib/observium_agent/scripts-enabled
+    ln -sf /usr/lib/observium_agent/scripts-available/mysql /usr/lib/observium_agent/scripts-enabled
+    echo -e "${GREEN}Reconfiguring local snmpd${NC}"
+    echo "agentAddress  udp:127.0.0.1:161" > /etc/snmp/snmpd.conf
+    snmpcommunity="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-15};echo;)"
+    echo "rocommunity $snmpcommunity" >> /etc/snmp/snmpd.conf
+    service snmpd restart
+    echo "\$config['poller_modules']['unix-agent']                   = 1;" >> /opt/observium/config.php
+    echo -e "${GREEN}Adding localhost to Observium${NC}"
+    /opt/observium/add_device.php localhost $snmpcommunity
+   echo -e "${GREEN}DONE! UNIX-agent is installed and this server is now monitored by Observium${NC}"
+
+}
+
 if [[ $EUID -ne 0 ]]; then
   echo -e "${RED}ERROR: You must be a root user${NC}" 2>&1
   exit 1
@@ -58,12 +84,17 @@ echo -e "${GREEN}Welcome to Observium automatic installscript, please choose whi
 echo "1. Observium Community Edition"
 echo "2. Observium Pro Edition stable (requires account at https://www.observium.org/subs/)"
 echo "3. Observium Pro Edition rolling (requires account at https://www.observium.org/subs/)"
-echo -n "(1-3):"
+echo "4. Install the UNIX-Agent (snmpd-config will be overwritten)"
+echo -n "(1-4):"
 read -n 1 observ_ver
+if [ $observ_ver = 4 ]; then
+   agentinstall
+   exit 1
+fi
 echo "you choose $observ_ver"
 echo " "
 
-if dpkg --list mysql-server | egrep -q ^ii; then
+if $(dpkg --list mysql-server | egrep -q ^ii) || $(dpkg --list mariadb-server | egrep -q ^ii); then
     echo -e "${YELLOW}WARNING: A MySQL Server is already installed. Do you know to root password for this server?${NC}"
     select yn in "Yes" "No"; do
         case $yn in
@@ -168,7 +199,7 @@ echo -e "${GREEN} [*] Creating log and rrd-directories...${NC}"
 mkdir -p logs
 #this mode makes all files created inherit permissions of rrd/-folder
 mkdir -p --mode=u+rwx,g+rs,o-w rrd
-useradd -G www-data observium
+id -u observium &>/dev/null || useradd -G www-data observium
 chown -R observium:observium logs
 chown -R observium:www-data rrd
 chmod -R g+w rrd
@@ -252,5 +283,20 @@ cat > /etc/cron.d/observium <<- EOM
 # Run housekeeping script daily for rrds, ports, orphaned entries in the database and performance data
 47 4 * * * observium /opt/observium/housekeeping.php -yrptb >> /dev/null 2>&1
 EOM
+
+echo -e "${GREEN}Would you like to install the UNIX-agent and monitor this host with Observium? (your snmpd-config will be overwritten!)${NC}"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes )
+            agentinstall
+            break
+            ;;
+        No )
+            echo "Skipping unix-agent installation"
+            break
+            ;;
+    esac
+done
+
 
 echo -e "${GREEN} [*] Installation finished! Use your webbrowser and login to the web interface with the account you just created and add your first device${NC}"
