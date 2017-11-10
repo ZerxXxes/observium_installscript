@@ -20,10 +20,13 @@ function agentinstall {
     ln -sf /usr/lib/observium_agent/scripts-available/dmi /usr/lib/observium_agent/scripts-enabled
     ln -sf /usr/lib/observium_agent/scripts-available/apache /usr/lib/observium_agent/scripts-enabled
     ln -sf /usr/lib/observium_agent/scripts-available/mysql /usr/lib/observium_agent/scripts-enabled
+    cp /opt/observium/scripts/distro /usr/bin/distro
+    chmod +x /usr/bin/distro
     echo -e "${GREEN}Reconfiguring local snmpd${NC}"
     echo "agentAddress  udp:127.0.0.1:161" > /etc/snmp/snmpd.conf
     snmpcommunity="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-15};echo;)"
     echo "rocommunity $snmpcommunity" >> /etc/snmp/snmpd.conf
+    echo "extend .1.3.6.1.4.1.2021.7890.1 distro /usr/bin/distro" >> /etc/snmp/snmpd.conf
     service snmpd restart
     echo "\$config['poller_modules']['unix-agent']                   = 1;" >> /opt/observium/config.php
     echo -e "${GREEN}Adding localhost to Observium${NC}"
